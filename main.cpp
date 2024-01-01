@@ -12,7 +12,7 @@ double funkcja(double x) {
 
 double liczPiCzesc(int poczatek, int koniec, double szerokosc) {
     double suma = 0.0;
-    
+
     for (int i = poczatek; i < koniec; ++i) {
         double x = (i + 0.5) * szerokosc;
         suma += funkcja(x);
@@ -25,19 +25,22 @@ double liczPiZrownoleglone(int n, int liczbaWatkow) {
     double a = 0.0;
     double b = 1.0;
     double szerokosc = (b - a) / n;
-    
+
     int punktyNaWatek = n / liczbaWatkow;
-    
+
     vector<thread> watki;
     vector<double> wyniki(liczbaWatkow, 0.0);
 
     auto start = chrono::high_resolution_clock::now();
 
+    // Dodanie wątków do wektora przed pobraniem ilości wątków od użytkownika
     for (int i = 0; i < liczbaWatkow; ++i) {
         int poczatek = i * punktyNaWatek;
         int koniec = (i + 1 == liczbaWatkow) ? n : (i + 1) * punktyNaWatek;
 
-        watki.emplace_back(liczPiCzesc, poczatek, koniec, szerokosc);
+        watki.emplace_back([poczatek, koniec, szerokosc, &wyniki, i]() {
+            wyniki[i] = liczPiCzesc(poczatek, koniec, szerokosc);
+        });
     }
 
     for (auto &watek : watki) {
@@ -57,19 +60,19 @@ double liczPiZrownoleglone(int n, int liczbaWatkow) {
     return wynik;
 }
 
+
 int main() {
     int liczbaPodzialow;
     int liczbaWatku;
 
-    cout << "Podaj liczbę podziałów: ";
+    cout << "Podaj liczbe podzialow: ";
     cin >> liczbaPodzialow;
 
-    cout << "Podaj liczbę wątków: ";
+    cout << "Podaj liczbe watkow: ";
     cin >> liczbaWatku;
-
     double wynik = liczPiZrownoleglone(liczbaPodzialow, liczbaWatku);
 
-    cout << "Przybliżona wartość liczby PI: " << wynik << endl;
+    cout << "Przyblizona wartosc liczby PI: " << wynik << endl;
 
     return 0;
 }
