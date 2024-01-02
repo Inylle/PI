@@ -2,7 +2,8 @@
 #include <cmath>
 #include <thread>
 #include <vector>
-#include <chrono>
+#include <numeric>
+#include <ctime>
 
 using namespace std;
 
@@ -10,10 +11,10 @@ double funkcja(double x) {
     return 4.0 / (1.0 + x * x);
 }
 
-double liczPiCzesc(int poczatek, int koniec, double szerokosc) {
+double liczPiCzesc(long long poczatek, long long koniec, double szerokosc) {
     double suma = 0.0;
 
-    for (int i = poczatek; i < koniec; ++i) {
+    for (long long i = poczatek; i < koniec; ++i) {
         double x = (i + 0.5) * szerokosc;
         suma += funkcja(x);
     }
@@ -21,22 +22,21 @@ double liczPiCzesc(int poczatek, int koniec, double szerokosc) {
     return suma * szerokosc;
 }
 
-double liczPiZrownoleglone(int n, int liczbaWatkow) {
+double liczPiZrownoleglone(long long n, int liczbaWatkow) {
     double a = 0.0;
     double b = 1.0;
     double szerokosc = (b - a) / n;
 
-    int punktyNaWatek = n / liczbaWatkow;
+    long long punktyNaWatek = n / liczbaWatkow;
 
     vector<thread> watki;
-    vector<double> wyniki(liczbaWatkow, 0.0);
+    double wyniki[liczbaWatkow];
 
-    auto start = chrono::high_resolution_clock::now();
+    auto start = clock();
 
-    // Dodanie wątków do wektora przed pobraniem ilości wątków od użytkownika
     for (int i = 0; i < liczbaWatkow; ++i) {
-        int poczatek = i * punktyNaWatek;
-        int koniec = (i + 1 == liczbaWatkow) ? n : (i + 1) * punktyNaWatek;
+        long long poczatek = i * punktyNaWatek;
+        long long koniec = (i + 1 == liczbaWatkow) ? n : (i + 1) * punktyNaWatek;
 
         watki.emplace_back([poczatek, koniec, szerokosc, &wyniki, i]() {
             wyniki[i] = liczPiCzesc(poczatek, koniec, szerokosc);
@@ -47,22 +47,18 @@ double liczPiZrownoleglone(int n, int liczbaWatkow) {
         watek.join();
     }
 
-    double wynik = 0.0;
-    for (int i = 0; i < liczbaWatkow; ++i) {
-        wynik += wyniki[i];
-    }
+    double wynik = accumulate(wyniki, wyniki + liczbaWatkow, 0.0);
 
-    auto stop = chrono::high_resolution_clock::now();
-    auto czas = chrono::duration_cast<chrono::milliseconds>(stop - start);
+    auto stop = clock();
+    double czas = static_cast<double>(stop - start) / CLOCKS_PER_SEC;
 
-    cout << "Czas: " << czas.count() << " ms" << endl;
+    cout << "Czas: " << czas * 1000 << " ms" << endl;
 
     return wynik;
 }
 
-
 int main() {
-    int liczbaPodzialow;
+    long long liczbaPodzialow;
     int liczbaWatku;
 
     cout << "Podaj liczbe podzialow: ";
@@ -70,6 +66,7 @@ int main() {
 
     cout << "Podaj liczbe watkow: ";
     cin >> liczbaWatku;
+
     double wynik = liczPiZrownoleglone(liczbaPodzialow, liczbaWatku);
 
     cout << "Przyblizona wartosc liczby PI: " << wynik << endl;
